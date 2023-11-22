@@ -1,0 +1,19 @@
+version: 0.1
+default:
+  deploy:
+    parameters:
+      stack_name: github-profile-maker
+      region: ap-northeast-1
+      capabilities: CAPABILITY_IAM
+      confirm_changeset: true
+      resolve_s3: true
+      parameter_overrides:
+        - "UserName=github user name"
+        - "AccessToken=Github access token"
+        - "RepoOwner=repository's owner"
+        - "RepoName=repository name"
+  package:
+    parameters:
+      region: ap-northeast-1
+      resolve_s3: true
+

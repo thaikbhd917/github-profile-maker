@@ -1,0 +1,67 @@
+Transform: AWS::Serverless-2016-10-31
+
+Parameters:
+  UserName:
+    Type: String
+    Description: Github USERNAME
+  AccessToken:
+    Type: String
+    Description: Github ACCESS_TOKEN
+  RepoOwner:
+    Type: String
+    Description: Github REPO_OWNER
+  RepoName:
+    Type: String
+    Description: Github REPO_NAME
+
+Resources:
+  GithubProfileMakerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: !Sub
+        - Stack ${AWS::StackName} Function ${ResourceName}
+        - ResourceName: GithubProfileMakerFunction
+      Environment:
+        Variables:
+          USERNAME: !Ref UserName
+          ACCESS_TOKEN: !Ref AccessToken
+          REPO_OWNER: !Ref RepoOwner
+          REPO_NAME: !Ref RepoName
+      CodeUri: src
+      Handler: handler.handler
+      Runtime: python3.10
+      MemorySize: 512
+      Timeout: 60
+      Tracing: Active
+  GithubProfileMakerFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Retain
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${GithubProfileMakerFunction}
+  GithubProfileMakerSchedule:
+    Type: AWS::Scheduler::Schedule
+    Properties:
+      ScheduleExpression: cron(0 9 ? * MON-FRI *)
+      FlexibleTimeWindow:
+        Mode: 'OFF'
+      Target:
+        Arn: !GetAtt GithubProfileMakerFunction.Arn
+        RoleArn: !GetAtt GithubProfileMakerScheduleToGithubProfileMakerFunctionRole.Arn
+  GithubProfileMakerScheduleToGithubProfileMakerFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          Effect: Allow
+          Principal:
+            Service: !Sub scheduler.${AWS::URLSuffix}
+          Action: sts:AssumeRole
+      Policies:
+        - PolicyName: StartExecutionPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: lambda:InvokeFunction
+                Resource: !GetAtt GithubProfileMakerFunction.Arn
