@@ -29,5 +29,3 @@ def work():
 
     print("Branch name: ", branch_name)
     github_profile_maker(branch_name, file_path, commit_message, file_content)
-
-handler(None, None)
